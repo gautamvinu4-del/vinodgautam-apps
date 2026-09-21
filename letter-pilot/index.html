@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#f4f0e8"/>
+  <title>Letter Pilot</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"/>
+  <style>
+    :root { --paper:#f4f0e8; --card:#fffcf7; --ink:#1c1916; --soft:#3f3a34; --muted:#6b645b; --line:#d9d2c5; --accent:#9b1c2e; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.55 "IBM Plex Sans", system-ui, sans-serif; }
+    main { max-width:58rem; margin:0 auto; padding:1.25rem 1rem 3rem; }
+    h1 { font-family:Fraunces, Georgia, serif; font-size:1.75rem; margin:0; letter-spacing:-0.02em; }
+    .lede { color:var(--soft); margin:.5rem 0 1.25rem; }
+    .grid { display:grid; gap:.75rem; }
+    @media (min-width:720px) { .layout { display:grid; grid-template-columns:16rem 1fr; gap:1.25rem; align-items:start; } }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:.5rem; padding:1rem; }
+    button.letter { width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:.5rem; padding:.85rem; min-height:3rem; font:inherit; }
+    button.letter[aria-current=true] { border-color:var(--ink); }
+    .kicker { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+    h2 { font-size:1.15rem; margin:.35rem 0 .6rem; }
+    dl { margin:0; display:grid; gap:.4rem; }
+    dt { color:var(--muted); font-size:.8rem; }
+    dd { margin:0; }
+    textarea { width:100%; min-height:9rem; border:1px solid var(--line); border-radius:.375rem; padding:.7rem; font:inherit; background:var(--paper); color:var(--ink); }
+    .row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.75rem; }
+    button.act { min-height:2.75rem; border:0; border-radius:.375rem; padding:0 1rem; font:inherit; font-weight:500; background:var(--ink); color:var(--paper); }
+    button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+    button:not(:disabled) { cursor:pointer; }
+    .note { font-size:.85rem; color:var(--muted); margin-top:.75rem; }
+    label.chk { display:flex; gap:.5rem; align-items:flex-start; margin:.4rem 0; font-size:.95rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Letter Pilot</h1>
+  <p class="lede" id="lede"></p>
+  <div class="layout">
+    <aside class="grid" id="list"></aside>
+    <section class="card" id="detail"></section>
+  </div>
+</main>
+<script>
+  const lang = /lang=(fr|de)/.exec(location.search)?.[1] || "en";
+  document.documentElement.lang = lang;
+  const I18N = {
+    en: {
+      lede: "Read a letter, confirm dates and amounts, then draft a careful reply. Nothing is sent from this tool. This is not legal, insurance or official advice.",
+      samples: "Sample letters",
+      own: "Paste your own letter",
+      confirm: "I have checked the dates and amounts.",
+      draftBtn: "Draft reply",
+      copy: "Copy reply",
+      copied: "Copied.",
+      need: "Please confirm the dates and amounts before a reply is drafted.",
+      sender: "Sender",
+      deadline: "Date to act",
+      amount: "Amount mentioned",
+      summary: "What this appears to be",
+      reply: "Draft reply",
+      paste: "Paste the letter text",
+      read: "Read this letter",
+      none: "No date or amount was found automatically. Add them in the draft if needed."
+    },
+    fr: {
+      lede: "Lisez un courrier, confirmez dates et montants, puis rédigez une réponse prudente. Rien n’est envoyé depuis cet outil. Ceci n’est pas un conseil juridique, d’assurance ou officiel.",
+      samples: "Courriers d’exemple",
+      own: "Coller votre courrier",
+      confirm: "J’ai vérifié les dates et les montants.",
+      draftBtn: "Rédiger la réponse",
+      copy: "Copier la réponse",
+      copied: "Copié.",
+      need: "Veuillez confirmer les dates et montants avant de rédiger une réponse.",
+      sender: "Expéditeur",
+      deadline: "Date d’action",
+      amount: "Montant mentionné",
+      summary: "Ce que cela semble être",
+      reply: "Brouillon de réponse",
+      paste: "Coller le texte du courrier",
+      read: "Lire ce courrier",
+      none: "Aucune date ou montant n’a été trouvé automatiquement. Ajoutez-les au brouillon si besoin."
+    },
+    de: {
+      lede: "Lesen Sie ein Schreiben, bestätigen Sie Daten und Beträge, und entwerfen Sie eine sorgfältige Antwort. Aus diesem Werkzeug wird nichts versendet. Dies ist keine Rechts-, Versicherungs- oder Amtsberatung.",
+      samples: "Beispielschreiben",
+      own: "Eigenes Schreiben einfügen",
+      confirm: "Ich habe Daten und Beträge geprüft.",
+      draftBtn: "Antwort entwerfen",
+      copy: "Antwort kopieren",
+      copied: "Kopiert.",
+      need: "Bitte Daten und Beträge bestätigen, bevor eine Antwort entworfen wird.",
+      sender: "Absender",
+      deadline: "Handlungsdatum",
+      amount: "Genannter Betrag",
+      summary: "Worum es zu gehen scheint",
+      reply: "Antwortentwurf",
+      paste: "Schreibenstext einfügen",
+      read: "Dieses Schreiben lesen",
+      none: "Kein Datum oder Betrag wurde automatisch gefunden. Ergänzen Sie den Entwurf bei Bedarf."
+    }
+  };
+  const t = I18N[lang];
+  document.getElementById("lede").textContent = t.lede;
+  const SAMPLES = {
+    en: [
+      { id:"ins", title:"Health insurance reminder", sender:"Geneva health insurer", deadline:"15 October 2026", amount:"CHF 214.50", summary:"A payment reminder for a monthly premium. Check whether it is already paid before sending money again.", body:"Reminder: premium of CHF 214.50 due by 15 October 2026. Please pay using the enclosed reference.", reply:"Dear Sir or Madam,\n\nThank you for your letter concerning the premium of CHF 214.50 due on 15 October 2026.\n\nI am checking whether this amount has already been paid. If a payment is still required, I will settle it by the stated date and keep the payment reference.\n\nYours faithfully," },
+      { id:"sch", title:"School trip consent", sender:"Primary school, Geneva", deadline:"3 October 2026", amount:"CHF 35", summary:"A consent form for a school outing. A parent or guardian usually needs to reply by the deadline.", body:"School outing on 10 October 2026. Contribution CHF 35. Consent required by 3 October 2026.", reply:"Dear Teacher,\n\nThank you for the information about the school outing on 10 October 2026.\n\nI confirm receipt of the letter. I will return the consent form and the contribution of CHF 35 by 3 October 2026.\n\nYours faithfully," },
+      { id:"com", title:"Commune parking notice", sender:"City of Geneva", deadline:"20 October 2026", amount:"CHF 60", summary:"A parking notice with an amount to pay or contest by a stated date.", body:"Parking notice: CHF 60. Please pay or write to us by 20 October 2026.", reply:"Dear Sir or Madam,\n\nThank you for the parking notice of CHF 60, with a date of 20 October 2026.\n\nI am reviewing the details. If the notice is correct, I will pay by that date. If I believe there is an error, I will write to you before the deadline.\n\nYours faithfully," }
+    ],
+    fr: [
+      { id:"ins", title:"Rappel d’assurance maladie", sender:"Assureur maladie, Genève", deadline:"15 octobre 2026", amount:"CHF 214.50", summary:"Un rappel de prime mensuelle. Vérifiez si le montant est déjà payé avant un nouveau versement.", body:"Rappel : prime de CHF 214.50 à régler au 15 octobre 2026.", reply:"Madame, Monsieur,\n\nJe vous remercie pour votre courrier concernant la prime de CHF 214.50 due le 15 octobre 2026.\n\nJe vérifie si ce montant a déjà été payé. Si un paiement reste nécessaire, je le réglerai dans le délai indiqué.\n\nJe vous prie d’agréer mes salutations distinguées," },
+      { id:"sch", title:"Sortie scolaire", sender:"École primaire, Genève", deadline:"3 octobre 2026", amount:"CHF 35", summary:"Une autorisation de sortie. Un parent ou représentant doit généralement répondre avant la date.", body:"Sortie scolaire le 10 octobre 2026. Participation CHF 35. Accord demandé pour le 3 octobre 2026.", reply:"Madame, Monsieur,\n\nJe vous remercie pour l’information relative à la sortie du 10 octobre 2026.\n\nJe confirmerai l’autorisation et la participation de CHF 35 d’ici le 3 octobre 2026.\n\nJe vous prie d’agréer mes salutations distinguées," },
+      { id:"com", title:"Avis de stationnement", sender:"Ville de Genève", deadline:"20 octobre 2026", amount:"CHF 60", summary:"Un avis de stationnement à payer ou à contester avant une date indiquée.", body:"Avis de stationnement : CHF 60. Paiement ou courrier attendu pour le 20 octobre 2026.", reply:"Madame, Monsieur,\n\nJe vous remercie pour l’avis de CHF 60, avec la date du 20 octobre 2026.\n\nJe vérifie les éléments. Si l’avis est correct, je paierai dans le délai. Dans le cas contraire, je vous écrirai avant cette date.\n\nJe vous prie d’agréer mes salutations distinguées," }
+    ],
+    de: [
+      { id:"ins", title:"Krankenkassen-Mahnung", sender:"Krankenversicherer, Genf", deadline:"15. Oktober 2026", amount:"CHF 214.50", summary:"Eine Mahnung für eine Monatsprämie. Prüfen Sie, ob der Betrag schon bezahlt ist.", body:"Mahnung: Prämie CHF 214.50 fällig am 15. Oktober 2026.", reply:"Sehr geehrte Damen und Herren\n\nVielen Dank für Ihr Schreiben zur Prämie von CHF 214.50, fällig am 15. Oktober 2026.\n\nIch prüfe, ob der Betrag bereits bezahlt wurde. Falls eine Zahlung noch nötig ist, begleiche ich sie fristgerecht.\n\nFreundliche Grüsse" },
+      { id:"sch", title:"Schulausflug", sender:"Primarschule Genf", deadline:"3. Oktober 2026", amount:"CHF 35", summary:"Eine Einwilligung für einen Schulausflug. Eine erziehungsberechtigte Person antwortet in der Regel bis zur Frist.", body:"Schulausflug am 10. Oktober 2026. Beitrag CHF 35. Einwilligung bis 3. Oktober 2026.", reply:"Guten Tag\n\nVielen Dank für die Information zum Schulausflug am 10. Oktober 2026.\n\nIch sende die Einwilligung und den Beitrag von CHF 35 bis zum 3. Oktober 2026.\n\nFreundliche Grüsse" },
+      { id:"com", title:"Parkhinweis", sender:"Stadt Genf", deadline:"20. Oktober 2026", amount:"CHF 60", summary:"Ein Parkhinweis mit einem Betrag, der bis zu einem Datum zu zahlen oder zu bestreiten ist.", body:"Parkhinweis: CHF 60. Zahlung oder Schreiben bis 20. Oktober 2026.", reply:"Sehr geehrte Damen und Herren\n\nVielen Dank für den Parkhinweis über CHF 60 mit Datum 20. Oktober 2026.\n\nIch prüfe die Angaben. Wenn der Hinweis zutrifft, zahle ich fristgerecht. Andernfalls schreibe ich Ihnen vor Ablauf der Frist.\n\nFreundliche Grüsse" }
+    ]
+  };
+  const samples = SAMPLES[lang];
+  let current = samples[0].id;
+  const list = document.getElementById("list");
+  const detail = document.getElementById("detail");
+
+  function parseOwn(text) {
+    const amount = (text.match(/CHF\s*\d+[.,]?\d*|EUR\s*\d+[.,]?\d*|USD\s*\d+[.,]?\d*/i) || [""])[0];
+    const deadline = (text.match(/\b(\d{1,2}[./]\d{1,2}[./]\d{2,4}|\d{1,2}\s+\w+\s+20\d{2})\b/) || [""])[0];
+    return {
+      id: "own",
+      title: t.own,
+      sender: "—",
+      deadline: deadline || "—",
+      amount: amount || "—",
+      summary: t.none,
+      body: text,
+      reply: lang === "fr"
+        ? "Madame, Monsieur,\n\nJe vous remercie pour votre courrier. Je vérifie les dates et montants indiqués et reviendrai vers vous dans le délai mentionné, le cas échéant.\n\nJe vous prie d’agréer mes salutations distinguées,"
+        : lang === "de"
+        ? "Sehr geehrte Damen und Herren\n\nVielen Dank für Ihr Schreiben. Ich prüfe die genannten Daten und Beträge und antworte fristgerecht, sofern eine Frist genannt ist.\n\nFreundliche Grüsse"
+        : "Dear Sir or Madam,\n\nThank you for your letter. I am checking the dates and amounts stated and will respond within the deadline if one is given.\n\nYours faithfully,"
+    };
+  }
+
+  function renderList() {
+    list.innerHTML = `<p class="kicker">${t.samples}</p>` + samples.map((s) =>
+      `<button type="button" class="letter" data-id="${s.id}" ${s.id===current?"aria-current=true":""}><strong>${s.title}</strong><div class="kicker">${s.sender}</div></button>`
+    ).join("") + `<button type="button" class="letter" data-id="own" ${current==="own"?"aria-current=true":""}><strong>${t.own}</strong></button>`;
+  }
+
+  function letter() {
+    if (current === "own") {
+      const text = document.getElementById("ownText")?.value || "";
+      return text ? parseOwn(text) : { id:"own", title:t.own, sender:"—", deadline:"—", amount:"—", summary:"", body:"", reply:"" };
+    }
+    return samples.find((s) => s.id === current);
+  }
+
+  function renderDetail() {
+    const s = letter();
+    if (current === "own" && !document.getElementById("ownText")) {
+      detail.innerHTML = `<p class="kicker">${t.own}</p><label>${t.paste}</label><textarea id="ownText"></textarea><div class="row"><button class="act" type="button" id="readOwn">${t.read}</button></div>`;
+      return;
+    }
+    const s2 = letter();
+    detail.innerHTML = `
+      <p class="kicker">${s2.sender}</p>
+      <h2>${s2.title}</h2>
+      <dl>
+        <div><dt>${t.sender}</dt><dd>${s2.sender}</dd></div>
+        <div><dt>${t.deadline}</dt><dd>${s2.deadline}</dd></div>
+        <div><dt>${t.amount}</dt><dd>${s2.amount}</dd></div>
+        <div><dt>${t.summary}</dt><dd>${s2.summary}</dd></div>
+      </dl>
+      <p style="white-space:pre-wrap;margin-top:1rem">${s2.body}</p>
+      <label class="chk"><input type="checkbox" id="ok"/> <span>${t.confirm}</span></label>
+      <div class="row">
+        <button class="act" type="button" id="draft">${t.draftBtn}</button>
+        <button class="ghost act" type="button" id="copy">${t.copy}</button>
+      </div>
+      <p class="note" id="msg"></p>
+      <textarea id="reply" style="margin-top:.75rem;display:none" aria-label="${t.reply}"></textarea>
+    `;
+  }
+
+  list.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-id]");
+    if (!btn) return;
+    current = btn.dataset.id;
+    renderList();
+    renderDetail();
+  });
+  detail.addEventListener("click", (e) => {
+    if (e.target.id === "readOwn") { renderList(); renderDetail(); return; }
+    if (e.target.id === "draft") {
+      const ok = document.getElementById("ok");
+      const msg = document.getElementById("msg");
+      if (!ok.checked) { msg.textContent = t.need; return; }
+      const box = document.getElementById("reply");
+      box.style.display = "block";
+      box.value = letter().reply;
+      msg.textContent = "";
+    }
+    if (e.target.id === "copy") {
+      const box = document.getElementById("reply");
+      if (!box || box.style.display === "none") return;
+      navigator.clipboard.writeText(box.value).then(() => { document.getElementById("msg").textContent = t.copied; });
+    }
+  });
+  renderList();
+  renderDetail();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="theme-color" content="#12110f"/>
+  <title>YouTube session assistant</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"/>
+  <style>
+    :root { --bg:#12110f; --card:#1a1815; --ink:#f3efe6; --muted:#a79f93; --line:#2e2b27; --accent:#e25a68; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+    main { max-width:52rem; margin:0 auto; padding:1.25rem 1rem 3rem; }
+    h1 { font-size:1.4rem; margin:0 0 .4rem; letter-spacing:-0.02em; }
+    p { color:var(--muted); }
+    .panel { background:var(--card); border:1px solid var(--line); border-radius:.5rem; padding:1rem; margin-top:1rem; }
+    label { display:block; font-size:.85rem; color:var(--muted); margin-bottom:.35rem; }
+    input[type=url], input[type=text] { width:100%; min-height:2.75rem; border:1px solid var(--line); border-radius:.375rem; background:#12110f; color:var(--ink); padding:0 .75rem; font:inherit; }
+    .row { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; align-items:center; }
+    button, .mark { min-height:2.75rem; border:0; border-radius:.375rem; padding:0 1rem; font:inherit; font-weight:500; background:var(--ink); color:var(--bg); }
+    button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+    button:not(:disabled) { cursor:pointer; }
+    #player { aspect-ratio:16/9; width:100%; background:#000; border-radius:.375rem; overflow:hidden; }
+    .stat { font-variant-numeric:tabular-nums; }
+    a { color:var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <h1 id="title">YouTube session assistant</h1>
+  <p id="intro">A personal session helper. It resumes playback if the session stalls, and a bookmarklet on YouTube.com can click Skip and Continue watching. Not a store product.</p>
+  <form class="panel" id="loadForm">
+    <label for="url" id="urlLabel">YouTube address</label>
+    <input id="url" type="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"/>
+    <div class="row">
+      <button type="submit" id="loadBtn">Open video</button>
+      <label class="row" style="margin:0"><input type="checkbox" id="resume" checked/> <span id="resumeLbl">Auto-resume if paused</span></label>
+      <span class="stat" id="timer">00:00:00</span>
+    </div>
+  </form>
+  <div class="panel"><div id="player"></div></div>
+  <section class="panel">
+    <h2 id="helpTitle" style="margin:0 0 .5rem; font-size:1.05rem;">Skip and Continue watching</h2>
+    <p id="helpBody">On YouTube.com, drag the control below to your bookmarks bar, then click it once during a session. It clicks YouTube’s own Skip and Continue watching controls. Use it only for your own session.</p>
+    <div class="row">
+      <a class="mark" id="bookmarklet" href="#">Session helper</a>
+    </div>
+  </section>
+</main>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+  const COPY = {
+    en: { title:"YouTube session assistant", intro:"A personal session helper. It resumes playback if the session stalls, and a bookmarklet on YouTube.com can click Skip and Continue watching. Not a store product.", url:"YouTube address", load:"Open video", resume:"Auto-resume if paused", helpTitle:"Skip and Continue watching", helpBody:"On YouTube.com, drag the control below to your bookmarks bar, then click it once during a session. It clicks YouTube’s own Skip and Continue watching controls. Use it only for your own session.", mark:"Session helper" },
+    fr: { title:"Assistant de session YouTube", intro:"Un assistant de session personnel. Il reprend la lecture si la session s’arrête, et un signet sur YouTube.com peut cliquer sur Ignorer et Continuer à regarder. Pas un produit en magasin.", url:"Adresse YouTube", load:"Ouvrir la vidéo", resume:"Reprendre automatiquement si pause", helpTitle:"Ignorer et Continuer à regarder", helpBody:"Sur YouTube.com, glissez la commande ci-dessous dans la barre de favoris, puis cliquez une fois pendant la session. Elle clique sur les commandes Ignorer et Continuer à regarder de YouTube. À utiliser uniquement pour votre session.", mark:"Assistant de session" },
+    de: { title:"YouTube-Sitzungsassistent", intro:"Ein persönlicher Sitzungshelfer. Er setzt die Wiedergabe fort, wenn die Sitzung stockt. Ein Lesezeichen auf YouTube.com kann «Überspringen» und «Weitersehen» anklicken. Kein Store-Produkt.", url:"YouTube-Adresse", load:"Video öffnen", resume:"Automatisch fortsetzen bei Pause", helpTitle:"Überspringen und Weitersehen", helpBody:"Ziehen Sie auf YouTube.com das Element unten in die Lesezeichenleiste und klicken Sie es einmal während der Sitzung. Es klickt YouTubes eigene Schaltflächen «Überspringen» und «Weitersehen». Nur für die eigene Sitzung verwenden.", mark:"Sitzungshelfer" }
+  };
+  const lang = /lang=(fr|de)/.exec(location.search)?.[1] || "en";
+  const t = COPY[lang] || COPY.en;
+  document.documentElement.lang = lang;
+  document.getElementById("title").textContent = t.title;
+  document.getElementById("intro").textContent = t.intro;
+  document.getElementById("urlLabel").textContent = t.url;
+  document.getElementById("loadBtn").textContent = t.load;
+  document.getElementById("resumeLbl").textContent = t.resume;
+  document.getElementById("helpTitle").textContent = t.helpTitle;
+  document.getElementById("helpBody").textContent = t.helpBody;
+  const helper = "javascript:(function(){if(!/youtube\\.com|youtu\\.be/.test(location.host)){alert('Open YouTube, then run this again.');return;}if(window.__vgSkip)return;window.__vgSkip=setInterval(function(){var s=document.querySelector('.ytp-ad-skip-button,.ytp-skip-ad-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-container button');if(s)s.click();document.querySelectorAll('button,yt-button-shape button,tp-yt-paper-button').forEach(function(b){var x=(b.innerText||'').trim().toLowerCase();if(x==='skip'||x==='skip ad'||x==='skip ads'||x==='continue watching'||x==='yes'||x==='ignorer'||x==='continuer à regarder'||x==='überspringen'||x==='weitersehen')b.click();});},900);})();";
+  const mark = document.getElementById("bookmarklet");
+  mark.href = helper;
+  mark.textContent = t.mark;
+  function videoId(value) {
+    try {
+      const u = new URL(value);
+      if (u.hostname.includes("youtu.be")) return u.pathname.replace("/", "").slice(0, 11);
+      return u.searchParams.get("v") || (u.pathname.match(/\/(embed|shorts)\/([^/?]+)/) || [])[2] || "";
+    } catch { return ""; }
+  }
+  let player, started = 0, pausedAt = 0;
+  window.onYouTubeIframeAPIReady = function () {};
+  document.getElementById("loadForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const id = videoId(document.getElementById("url").value.trim());
+    if (!id) return;
+    if (player) { player.loadVideoById(id); started = Date.now(); return; }
+    player = new YT.Player("player", {
+      videoId: id,
+      playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+      events: {
+        onReady: () => { started = Date.now(); player.playVideo(); },
+        onStateChange: (ev) => { if (ev.data === 2) pausedAt = Date.now(); if (ev.data === 1) pausedAt = 0; }
+      }
+    });
+  });
+  setInterval(() => {
+    if (!started) return;
+    const ms = Date.now() - started;
+    const h = String(Math.floor(ms / 3600000)).padStart(2, "0");
+    const m = String(Math.floor(ms / 60000) % 60).padStart(2, "0");
+    const s = String(Math.floor(ms / 1000) % 60).padStart(2, "0");
+    document.getElementById("timer").textContent = `${h}:${m}:${s}`;
+    if (document.getElementById("resume").checked && player && pausedAt && Date.now() - pausedAt > 4000) {
+      try { player.playVideo(); } catch {}
+    }
+  }, 500);
+</script>
+</body>
+</html>
